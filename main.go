@@ -1,5 +1,7 @@
 package main
 
+// TODO: админка для добавления сообщений с кнопочкой
+
 import (
 	"fmt"
 	"log"
