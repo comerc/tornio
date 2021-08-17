@@ -1,6 +1,7 @@
 package main
 
 // TODO: админка для добавления сообщений с кнопочкой
+// TODO: Config.Main - чтобы не обрабатывать чужие запросы
 
 import (
 	"fmt"
@@ -163,6 +164,9 @@ func main() {
 			// log.Printf("%#v", update)
 			if updateNewCallbackQuery, ok := update.(*client.UpdateNewCallbackQuery); ok {
 				query := updateNewCallbackQuery
+				if query.ChatId != configData.Main {
+					continue
+				}
 				var data []byte
 				if payload, ok := query.Payload.(*client.CallbackQueryPayloadData); ok {
 					data = payload.Data
@@ -172,7 +176,7 @@ func main() {
 				_, err := tdlibClient.AnswerCallbackQuery(&client.AnswerCallbackQueryRequest{
 					CallbackQueryId: updateNewCallbackQuery.Id,
 					Text: func() string {
-						return fmt.Sprintf("Answer %d:%d", query.ChatId, query.MessageId)
+						return fmt.Sprintf("Answer %d:%d rand:%d", query.ChatId, query.MessageId, getRand(0, 9))
 					}(),
 					ShowAlert: true,
 				})
@@ -183,13 +187,16 @@ func main() {
 			}
 			if updateMessageSendSucceeded, ok := update.(*client.UpdateMessageSendSucceeded); ok {
 				message := updateMessageSendSucceeded.Message
+				if message.ChatId != configData.Main {
+					continue
+				}
 				tmpMessageId := updateMessageSendSucceeded.OldMessageId
 				log.Printf("updateMessageSendSucceeded %d:%d:%d", message.ChatId, tmpMessageId, message.Id)
 				continue
 			}
 			if updateNewMessage, ok := update.(*client.UpdateNewMessage); ok {
 				src := updateNewMessage.Message
-				if src.IsOutgoing {
+				if src.IsOutgoing || src.ChatId != configData.Main {
 					continue
 				}
 				if _, err := tdlibClient.EditMessageReplyMarkup(&client.EditMessageReplyMarkupRequest{
