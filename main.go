@@ -1,8 +1,5 @@
 package main
 
-// TODO: админка для добавления сообщений с кнопочкой
-// TODO: Config.Main - чтобы не обрабатывать чужие запросы
-
 import (
 	"fmt"
 	"log"
@@ -12,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -176,7 +174,8 @@ func main() {
 				_, err := tdlibClient.AnswerCallbackQuery(&client.AnswerCallbackQueryRequest{
 					CallbackQueryId: updateNewCallbackQuery.Id,
 					Text: func() string {
-						return fmt.Sprintf("Answer %d:%d rand:%d", query.ChatId, query.MessageId, getRand(0, 9))
+						return fmt.Sprintf("Answer %s\n%d:%d\nrand:%d",
+							string(data), query.ChatId, query.MessageId, getRand(0, 9))
 					}(),
 					ShowAlert: true,
 				})
@@ -196,28 +195,34 @@ func main() {
 			}
 			if updateNewMessage, ok := update.(*client.UpdateNewMessage); ok {
 				src := updateNewMessage.Message
-				if src.IsOutgoing || src.ChatId != configData.Main {
-					continue
-				}
-				if _, err := tdlibClient.EditMessageReplyMarkup(&client.EditMessageReplyMarkupRequest{
-					ChatId:    src.ChatId,
-					MessageId: src.Id,
-					ReplyMarkup: func() client.ReplyMarkup {
-						if true {
-							log.Print("**** ReplyMarkup")
-							s := fmt.Sprintf("%d", src.Id)
-							Rows := make([][]*client.InlineKeyboardButton, 0)
-							Btns := make([]*client.InlineKeyboardButton, 0)
-							Btns = append(Btns, &client.InlineKeyboardButton{
-								Text: "Answer", Type: &client.InlineKeyboardButtonTypeCallback{Data: []byte(s)},
-							})
-							Rows = append(Rows, Btns)
-							return &client.ReplyMarkupInlineKeyboard{Rows: Rows}
+				if sender, ok := src.Sender.(*client.MessageSenderUser); ok && isAdmin(sender.UserId) {
+					if content, ok := src.Content.(*client.MessageText); ok {
+						if _, err := tdlibClient.SendMessage(&client.SendMessageRequest{
+							ChatId: configData.Main,
+							InputMessageContent: &client.InputMessageText{
+								Text:                  content.Text,
+								DisableWebPagePreview: true,
+								ClearDraft:            true,
+							},
+							Options: &client.MessageSendOptions{
+								DisableNotification: true,
+							},
+							ReplyMarkup: getReplyMarkup("from SendMessage()"),
+						}); err != nil {
+							log.Print(err)
 						}
-						return nil
-					}(),
-				}); err != nil {
-					log.Print(err)
+					}
+				} else {
+					if src.IsOutgoing || src.ChatId != configData.Main {
+						continue
+					}
+					if _, err := tdlibClient.EditMessageReplyMarkup(&client.EditMessageReplyMarkupRequest{
+						ChatId:      src.ChatId,
+						MessageId:   src.Id,
+						ReplyMarkup: getReplyMarkup("from EditMessageReplyMarkup()"),
+					}); err != nil {
+						log.Print(err)
+					}
 				}
 				continue
 			}
@@ -327,14 +332,14 @@ func handlePanic() {
 // 	return len(utf16.Encode([]rune(s)))
 // }
 
-// func contains(a []string, s string) bool {
-// 	for _, t := range a {
-// 		if t == s {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+func contains(a []string, s string) bool {
+	for _, t := range a {
+		if t == s {
+			return true
+		}
+	}
+	return false
+}
 
 // func containsInt64(a []int64, e int64) bool {
 // 	for _, t := range a {
@@ -395,3 +400,20 @@ func getRand(min, max int) int {
 // 	}
 // 	return nil
 // }
+
+func isAdmin(UserId int32) bool {
+	s := os.Getenv("TORNIO_ADMIN_USER_IDS")
+	IDs := strings.Split(s, ",")
+	return contains(IDs, fmt.Sprintf("%d", UserId))
+}
+
+func getReplyMarkup(s string) client.ReplyMarkup {
+	log.Print("**** ReplyMarkup")
+	Rows := make([][]*client.InlineKeyboardButton, 0)
+	Btns := make([]*client.InlineKeyboardButton, 0)
+	Btns = append(Btns, &client.InlineKeyboardButton{
+		Text: "Answer", Type: &client.InlineKeyboardButtonTypeCallback{Data: []byte(s)},
+	})
+	Rows = append(Rows, Btns)
+	return &client.ReplyMarkupInlineKeyboard{Rows: Rows}
+}
