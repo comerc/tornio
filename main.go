@@ -213,7 +213,11 @@ func main() {
 						}
 					}
 				} else {
-					if src.IsOutgoing || src.ChatId != configData.Main {
+					if src.IsOutgoing {
+						log.Print("src.IsOutgoing ", src.ChatId)
+						continue // !!
+					}
+					if src.ChatId != configData.Main {
 						continue
 					}
 					if _, err := tdlibClient.EditMessageReplyMarkup(&client.EditMessageReplyMarkupRequest{
