@@ -190,7 +190,7 @@ func main() {
 					continue
 				}
 				tmpMessageId := updateMessageSendSucceeded.OldMessageId
-				log.Printf("updateMessageSendSucceeded %d:%d:%d", message.ChatId, tmpMessageId, message.Id)
+				log.Printf("updateMessageSendSucceeded > %d:%d:%d", message.ChatId, tmpMessageId, message.Id)
 				continue
 			}
 			if updateNewMessage, ok := update.(*client.UpdateNewMessage); ok {
@@ -214,7 +214,7 @@ func main() {
 					}
 				} else {
 					if src.IsOutgoing {
-						log.Print("src.IsOutgoing ", src.ChatId)
+						log.Print("src.IsOutgoing > ", src.ChatId)
 						continue // !!
 					}
 					if src.ChatId != configData.Main {
@@ -237,7 +237,7 @@ func main() {
 func convertToInt(s string) int {
 	i, err := strconv.Atoi(s)
 	if err != nil {
-		log.Print("convertToInt() ", err)
+		log.Print("convertToInt > ", err)
 		return 0
 	}
 	return int(i)
@@ -292,9 +292,9 @@ func handlePanic() {
 // 		return nil
 // 	})
 // 	if err != nil {
-// 		log.Printf("getByDB() key: %s err: %s", string(key), err)
+// 		log.Printf("getByDB > key: %s err: %s", string(key), err)
 // 		// } else {
-// 		// log.Printf("getByDB() key: %s val: %s", string(key), string(val))
+// 		// log.Printf("getByDB > key: %s val: %s", string(key), string(val))
 // 	}
 // 	return val
 // }
@@ -305,9 +305,9 @@ func handlePanic() {
 // 		return err
 // 	})
 // 	if err != nil {
-// 		log.Printf("setByDB() key: %s err: %s ", string(key), err)
+// 		log.Printf("setByDB > key: %s err: %s ", string(key), err)
 // 		// } else {
-// 		// log.Printf("setByDB() key: %s val: %s", string(key), string(val))
+// 		// log.Printf("setByDB > key: %s val: %s", string(key), string(val))
 // 	}
 // }
 
