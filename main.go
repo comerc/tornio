@@ -190,7 +190,7 @@ func main() {
 					continue
 				}
 				tmpMessageId := updateMessageSendSucceeded.OldMessageId
-				log.Printf("updateMessageSendSucceeded > %d:%d:%d", message.ChatId, tmpMessageId, message.Id)
+				log.Printf("UpdateMessageSendSucceeded > %d:%d:%d", message.ChatId, tmpMessageId, message.Id)
 				continue
 			}
 			if updateNewMessage, ok := update.(*client.UpdateNewMessage); ok {
