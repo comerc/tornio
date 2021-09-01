@@ -1,4 +1,4 @@
-module github.com/comerc/shunt
+module github.com/comerc/tornio
 
 go 1.16
 

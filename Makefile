@@ -1,5 +1,5 @@
 build-image:
-	docker build -fDockerfile -tshunt .
+	docker build -fDockerfile -ttornio .
 
 up:
 	docker-compose -fdocker-compose.yml up

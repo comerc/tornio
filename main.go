@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/comerc/shunt/config"
+	"github.com/comerc/tornio/config"
 	"github.com/dgraph-io/badger"
 	"github.com/joho/godotenv"
 	"github.com/zelenin/go-tdlib/client"
@@ -160,7 +160,9 @@ func main() {
 	for update := range listener.Updates {
 		if update.GetClass() == client.ClassUpdate {
 			// log.Printf("%#v", update)
-			if updateNewCallbackQuery, ok := update.(*client.UpdateNewCallbackQuery); ok {
+			switch updateType := update.(type) {
+			case *client.UpdateNewCallbackQuery:
+				updateNewCallbackQuery := updateType
 				query := updateNewCallbackQuery
 				if query.ChatId != configData.Main {
 					continue
@@ -182,18 +184,16 @@ func main() {
 				if err != nil {
 					log.Print(err)
 				}
-				continue
-			}
-			if updateMessageSendSucceeded, ok := update.(*client.UpdateMessageSendSucceeded); ok {
+			case *client.UpdateMessageSendSucceeded:
+				updateMessageSendSucceeded := updateType
 				message := updateMessageSendSucceeded.Message
 				if message.ChatId != configData.Main {
 					continue
 				}
 				tmpMessageId := updateMessageSendSucceeded.OldMessageId
 				log.Printf("UpdateMessageSendSucceeded > %d:%d:%d", message.ChatId, tmpMessageId, message.Id)
-				continue
-			}
-			if updateNewMessage, ok := update.(*client.UpdateNewMessage); ok {
+			case *client.UpdateNewMessage:
+				updateNewMessage := updateType
 				src := updateNewMessage.Message
 				if sender, ok := src.Sender.(*client.MessageSenderUser); ok && isAdmin(sender.UserId) {
 					if content, ok := src.Content.(*client.MessageText); ok {
@@ -228,7 +228,6 @@ func main() {
 						log.Print(err)
 					}
 				}
-				continue
 			}
 		}
 	}
@@ -413,11 +412,11 @@ func isAdmin(UserId int32) bool {
 
 func getReplyMarkup(s string) client.ReplyMarkup {
 	log.Print("**** ReplyMarkup")
-	Rows := make([][]*client.InlineKeyboardButton, 0)
-	Btns := make([]*client.InlineKeyboardButton, 0)
-	Btns = append(Btns, &client.InlineKeyboardButton{
+	rows := make([][]*client.InlineKeyboardButton, 0)
+	btns := make([]*client.InlineKeyboardButton, 0)
+	btns = append(btns, &client.InlineKeyboardButton{
 		Text: "Answer", Type: &client.InlineKeyboardButtonTypeCallback{Data: []byte(s)},
 	})
-	Rows = append(Rows, Btns)
-	return &client.ReplyMarkupInlineKeyboard{Rows: Rows}
+	rows = append(rows, btns)
+	return &client.ReplyMarkupInlineKeyboard{Rows: rows}
 }
